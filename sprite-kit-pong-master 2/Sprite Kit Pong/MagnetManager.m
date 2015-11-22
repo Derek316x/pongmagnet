@@ -73,6 +73,8 @@
 // This delegate method is invoked when the location manager has heading data.
 - (void)locationManager:(CLLocationManager *)manager didUpdateHeading:(CLHeading *)heading {
     
+    self.onHeadingUpdateListener(heading);
+    
     self.heading = heading;
     self.vector.magnitude = sqrt(heading.x*heading.x + heading.y*heading.y + heading.z*heading.z);
     self.vector.direction = [self rawHeadingAngleInDeg];

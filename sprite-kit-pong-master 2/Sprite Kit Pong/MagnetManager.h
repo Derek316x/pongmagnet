@@ -28,8 +28,9 @@
 @property(nonatomic) double bottomCalibrationVal;
 @property(nonatomic) BOOL isTopBottomCalibrated;
 
-
 @property (nonatomic) UIView *myView;
+
+@property (nonatomic, copy) void (^onHeadingUpdateListener)(CLHeading *);
 
 - (void) setup;
 -(void)checkLocationServicesAuthorization;

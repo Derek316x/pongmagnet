@@ -43,8 +43,9 @@
     if (self.isBottomSet == true && self.isTopSet == true) {
         
         self.manager.isTopBottomCalibrated = true;
-         [self dismissViewControllerAnimated:YES completion:nil];
-        
+         [self dismissViewControllerAnimated:YES completion:^{
+             self.manager.isTopBottomCalibrated = true;
+         }];
     }
 }
 

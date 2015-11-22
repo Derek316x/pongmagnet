@@ -12,8 +12,8 @@
 #define kPaddleWidth 20.0 //width of the paddles
 #define kPaddleHeight 80.0 //height of the paddles
 #define kBallRadius 15.0 //radius of the moving ball
-#define kStartingVelocityX 650.0 //starting velocity x value for moving the ball
-#define kStartingVelocityY -650.0 //starting velocity y value for moving the ball
+#define kStartingVelocityX 500.0 //starting velocity x value for moving the ball
+#define kStartingVelocityY -500.0 //starting velocity y value for moving the ball
 #define kVelocityMultFactor 1.05 //multiply factor for speeding up the ball after some time
 #define kIpadMultFactor 2.0 //multiply factor for ipad object scaling
 #define kSpeedupInterval 5.0 //interval after which the speedUpTheBall method is called
@@ -61,7 +61,7 @@ static const uint32_t paddleCategory = 0x1 << 2;
 
 @implementation SKPMyScene
 
--(id)initWithSize:(CGSize)size {    
+-(id)initWithSize:(CGSize)size {
     if (self = [super initWithSize:size])
     {
         
@@ -84,7 +84,7 @@ static const uint32_t paddleCategory = 0x1 << 2;
         //setup physics body for scene
         [self setPhysicsBody:[SKPhysicsBody bodyWithEdgeLoopFromRect:self.frame]];
         self.physicsBody.categoryBitMask = cornerCategory;
-//        NSLog(@"category %d",self.physicsBody.categoryBitMask);
+        //        NSLog(@"category %d",self.physicsBody.categoryBitMask);
         self.physicsBody.dynamic = NO;
         self.physicsBody.friction = 0.0;
         self.physicsBody.restitution = 1.0;
@@ -221,10 +221,10 @@ static const uint32_t paddleCategory = 0x1 << 2;
     
     //start the timer for speed-up
     self.speedupTimer = [NSTimer scheduledTimerWithTimeInterval:kSpeedupInterval
-                                     target:self
-                                   selector:@selector(speedUpTheBall)
-                                   userInfo:nil
-                                    repeats:YES];
+                                                         target:self
+                                                       selector:@selector(speedUpTheBall)
+                                                       userInfo:nil
+                                                        repeats:YES];
 }
 
 //restart the game when restart node is tapped
@@ -295,40 +295,60 @@ static const uint32_t paddleCategory = 0x1 << 2;
 //move the first paddle with data from previous and new positions
 -(void)moveFirstPaddle
 {
-   // CGPoint previousLocation = self.previousPaddleLocation;
-
-    CGPoint newLocation = CGPointMake(self.playerOnePaddleNode.position.x, self.manager.heading.x);
-    
-    /*
-    if (newLocation.x > self.size.width / 2.0)
-    {
-        //finger is on the other player side
-        return;
+    if (self.manager.isTopBottomCalibrated == true) {
+        
+        // CGPoint previousLocation = self.previousPaddleLocation;
+        
+        CGFloat magY = self.manager.heading.x;
+        
+        //bound Y to calibration bounds
+        if (magY > self.manager.topCalibrationVal) {
+            magY = self.manager.topCalibrationVal;
+        }
+        else if (magY < self.manager.bottomCalibrationVal){
+            magY = self.manager.bottomCalibrationVal;
+        }
+        
+        //calculate screen bounds
+        CGFloat yMax = self.size.height - self.playerOnePaddleNode.size.width/2.0 - self.playerOnePaddleNode.size.height/2.0;
+        CGFloat yMin = self.playerOnePaddleNode.size.width/2.0 + self.playerOnePaddleNode.size.height/2.0;
+        
+        CGFloat screenY = (((magY - self.manager.bottomCalibrationVal)/(self.manager.topCalibrationVal - self.manager.bottomCalibrationVal))*(yMax - yMin)) + yMin;
+        
+        CGPoint newLocation = CGPointMake(self.playerOnePaddleNode.position.x, screenY);
+        
+        /*
+         if (newLocation.x > self.size.width / 2.0)
+         {
+         //finger is on the other player side
+         return;
+         }
+         */
+        
+        //calculate new paddle position
+        CGFloat x = self.playerOnePaddleNode.position.x;
+        
+        CGFloat y = self.playerOnePaddleNode.position.y + (newLocation.y - self.previousPaddleLocation.y) * kPaddleMoveMult;
+        
+        
+        
+        //bound paddle position Y to the screen bounds
+        if (y > yMax)
+        {
+            y = yMax;
+        }
+        else if(y < yMin)
+        {
+            y = yMin;
+        }
+        
+        //set new position for paddle
+        //self.playerOnePaddleNode.position = CGPointMake(x, y);
+        self.playerOnePaddleNode.position = newLocation;
+        
+        //save paddle location
+        self.previousPaddleLocation = self.playerOnePaddleNode.position;
     }
-     */
-    
-    CGFloat x = self.playerOnePaddleNode.position.x;
-    CGFloat y = self.playerOnePaddleNode.position.y + (newLocation.y - self.previousPaddleLocation.y) * kPaddleMoveMult;
-    
-    //calculate screen bounds
-    CGFloat yMax = self.size.height - self.playerOnePaddleNode.size.width/2.0 - self.playerOnePaddleNode.size.height/2.0;
-    CGFloat yMin = self.playerOnePaddleNode.size.width/2.0 + self.playerOnePaddleNode.size.height/2.0;
-    
-    //bound Y to the screen bounds
-    if (y > yMax)
-    {
-        y = yMax;
-    }
-    else if(y < yMin)
-    {
-        y = yMin;
-    }
-    
-    //set new position for paddle
-    self.playerOnePaddleNode.position = CGPointMake(x, y);
-
-    //save paddle location
-    self.previousPaddleLocation = self.playerOnePaddleNode.position;
 }
 
 //move the second paddle with data from previous and new touch positions
@@ -487,7 +507,7 @@ static const uint32_t paddleCategory = 0x1 << 2;
 }
 -(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-//    NSLog(@"ended %d",touches.count);
+    //    NSLog(@"ended %d",touches.count);
     for (UITouch *touch in touches) {
         if (touch == self.playerOnePaddleControlTouch)
         {

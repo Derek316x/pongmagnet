@@ -65,7 +65,7 @@ static const uint32_t paddleCategory = 0x1 << 2;
     if (self = [super initWithSize:size])
     {
         
-        //setup magnet
+        //setup magnet /
         self.manager = [MagnetManager sharedManager];
         [self.manager setup];
         
